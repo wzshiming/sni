@@ -32,7 +32,7 @@ func getHTTPHeader(r io.Reader, key []byte) (string, error) {
 		}
 		// check for the end of the headers
 		if len(line) == 0 {
-			return "", nil
+			return "", ErrNotFound
 		}
 
 		// check for the key
@@ -45,7 +45,12 @@ func getHTTPHeader(r io.Reader, key []byte) (string, error) {
 		if !bytes.Equal(bytes.ToLower(line[:len(key)]), key) {
 			continue
 		}
-		return string(bytes.TrimSpace(line[len(key)+1:])), nil
+
+		host := bytes.TrimSpace(line[len(key)+1:])
+		if len(host) == 0 {
+			return "", ErrNotFound
+		}
+		return string(host), nil
 	}
 }
 
