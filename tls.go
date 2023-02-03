@@ -136,6 +136,9 @@ func skip(r io.Reader, n int, buf []byte) error {
 		if err != nil {
 			return err
 		}
+		if m == 0 {
+			return io.EOF
+		}
 		n -= m
 	}
 	return nil
