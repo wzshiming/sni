@@ -33,6 +33,9 @@ func TLSHost(r io.Reader) (string, error) {
 	if blockLen <= 0 {
 		return "", ErrNotFound
 	}
+	if blockLen > len(tmp) {
+		return "", fmt.Errorf("block too long: %d", blockLen)
+	}
 	_, err = io.ReadFull(r, tmp[:blockLen])
 	if err != nil {
 		return "", err
@@ -116,6 +119,9 @@ func skipExtensionBlock(r io.Reader, tmp []byte) error {
 	}
 
 	cipherListLength := number(tmp[sessionIDLength:])
+	if cipherListLength > len(tmp)-1 {
+		return fmt.Errorf("cipher list too long: %d", cipherListLength)
+	}
 	err = skip(r, cipherListLength+1, tmp)
 	if err != nil {
 		return fmt.Errorf("cipher list: %w", err)
