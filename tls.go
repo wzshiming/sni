@@ -8,7 +8,7 @@ import (
 // TLSHost returns the TLS host
 func TLSHost(r io.Reader) (string, error) {
 	const (
-		byteLen = 256
+		byteLen = 257
 	)
 
 	var data [byteLen]byte
