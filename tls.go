@@ -141,12 +141,13 @@ func skipExtensionBlock(r io.Reader, tmp []byte) error {
 
 func skip(r io.Reader, n int, buf []byte) error {
 	for n > 0 {
-		m, err := io.ReadFull(r, buf[:n%len(buf)])
+		chunkSize := n
+		if chunkSize > len(buf) {
+			chunkSize = len(buf)
+		}
+		m, err := io.ReadFull(r, buf[:chunkSize])
 		if err != nil {
 			return err
-		}
-		if m == 0 {
-			return io.EOF
 		}
 		n -= m
 	}
