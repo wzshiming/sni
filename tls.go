@@ -29,31 +29,31 @@ func TLSHost(r io.Reader) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	blockLen := number(tmp[:2])
-	if blockLen <= 0 {
+	serverNameLen := number(tmp[:2])
+	if serverNameLen <= 0 {
 		return "", ErrNotFound
 	}
-	if blockLen > len(tmp) {
-		return "", fmt.Errorf("block too long: %d", blockLen)
+	if serverNameLen > len(tmp) {
+		return "", fmt.Errorf("server name too long: %d", serverNameLen)
 	}
-	_, err = io.ReadFull(r, tmp[:blockLen])
+	_, err = io.ReadFull(r, tmp[:serverNameLen])
 	if err != nil {
 		return "", err
 	}
-	return string(tmp[:blockLen]), nil
+	return string(tmp[:serverNameLen]), nil
 }
 
 // skipSNI skips the SNI block
 func skipSNI(r io.Reader, tmp []byte) error {
 	_, err := io.ReadFull(r, tmp[:2])
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read SNI block length: %w", err)
 	}
 	blockLength := number(tmp[:2])
 	for length := 0; length < blockLength; {
 		_, err = io.ReadFull(r, tmp[:3])
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read SNI block item: %w", err)
 		}
 		if tmp[2] == 0 {
 			return nil
@@ -63,7 +63,7 @@ func skipSNI(r io.Reader, tmp []byte) error {
 		length += itemLength + 4
 		err = skip(r, itemLength, tmp)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to skip SNI block item data: %w", err)
 		}
 	}
 	return ErrNotFound
@@ -73,13 +73,13 @@ func skipSNI(r io.Reader, tmp []byte) error {
 func skipSN(r io.Reader, tmp []byte) error {
 	_, err := io.ReadFull(r, tmp[:2])
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read SN block: %w", err)
 	}
 	blockLength := number(tmp[:2])
 	for length := 0; length+4 < blockLength; {
 		_, err = io.ReadFull(r, tmp[:2])
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read SN block item: %w", err)
 		}
 		if tmp[0] == 0 && tmp[1] == 0 {
 			return nil
@@ -87,14 +87,14 @@ func skipSN(r io.Reader, tmp []byte) error {
 
 		_, err = io.ReadFull(r, tmp[:2])
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read SN block item length: %w", err)
 		}
 
 		itemLength := number(tmp[:2])
 		length += itemLength + 4
 		err = skip(r, itemLength, tmp)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to skip SN block item data: %d %w", itemLength, err)
 		}
 	}
 	return ErrNotFound
