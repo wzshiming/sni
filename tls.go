@@ -107,9 +107,12 @@ func skipExtensionBlock(r io.Reader, tmp []byte) error {
 		sessionIDOffset   = totalLengthOffset + 38
 	)
 
-	_, err := io.ReadFull(r, tmp[:sessionIDOffset+1])
+	n, err := io.ReadFull(r, tmp[:sessionIDOffset+1])
 	if err != nil {
-		return fmt.Errorf("client hello: %w", err)
+		return fmt.Errorf("client hello: %q: %w", tmp[:n], err)
+	}
+	if tmp[0] != 0x16 || tmp[1] != 0x03 {
+		return fmt.Errorf("not a TLS handshake: %q", tmp[:n])
 	}
 
 	sessionIDLength := int(tmp[sessionIDOffset])
